@@ -76,9 +76,9 @@ int main(int argc, char** argv)
     elemSize = 3; //bmpInfoHeader.biBitCount / 8;
     int pos = 0; 
 
-    for(x = 0; x < bmpInfoHeader.biWidth*bmpInfoHeader.biHeight/8; x++) {      
+    for(x = 0; x < bmpInfoHeader.biWidth*bmpInfoHeader.biHeight; x++) {      
 		int num = inimg[x]; 
-        int res = num >> i & 1;
+        int res = num;
 	    outimg[pos++]=palrgb[res].rgbBlue;
         outimg[pos++]=palrgb[res].rgbGreen;
 		outimg[pos++]=palrgb[res].rgbRed;

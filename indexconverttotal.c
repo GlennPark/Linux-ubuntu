@@ -18,7 +18,9 @@ int main(int argc, char** argv)
     BITMAPINFOHEADER bmpInfoHeader;     /* BMP IMAGE INFO */
     RGBQUAD *palrgb;
     ubyte *inimg, *outimg;
-    int x, y, z, elemSize;
+    int x, y, z;
+	float elemSize;
+	int mask = 0;
 
     if(argc != 3) {
         fprintf(stderr, "usage : %s input.bmp output.bmp\n", argv[0]);
@@ -58,12 +60,11 @@ int main(int argc, char** argv)
 		bmpInfoHeader.biClrUsed == 256;
 	}
 
-
     palrgb = (RGBQUAD*)malloc(sizeof(RGBQUAD)*bmpInfoHeader.biClrUsed);
     fread(palrgb, sizeof(RGBQUAD), bmpInfoHeader.biClrUsed, fp); 
 
     for(int i = 0; i < bmpInfoHeader.biClrUsed; i++) 
-        printf("%d : %x %x %x %x\n", i, palrgb[i].rgbRed, palrgb[i].rgbGreen, 
+		printf("%d : %x %x %x %x\n", i, palrgb[i].rgbRed, palrgb[i].rgbGreen, 
                               palrgb[i].rgbRed, palrgb[i].rgbReserved);
     //printf("%d %d\n", sizeof(BITMAPFILEHEADER), sizeof(BITMAPINFOHEADER));
 
@@ -72,16 +73,24 @@ int main(int argc, char** argv)
     fread(inimg, sizeof(ubyte), bmpInfoHeader.SizeImage, fp); 
     
     fclose(fp);
-    
-    elemSize = 3; //bmpInfoHeader.biBitCount / 8;
+
+    for(x = 0; x < bmpInfoHeader.biBitCount; x++)
+	mask |= 1 << x;
+
+printf:("%d", mask);
+    elemSize = bmpInfoHeader.biBitCount / 8.;
     int pos = 0; 
 
-    for(x = 0; x < bmpInfoHeader.biWidth*bmpInfoHeader.biHeight/8; x++) {      
+    for(x = 0; x < bmpInfoHeader.biWidth*bmpInfoHeader.biHeight*elemSize; x++) {      
+		
+		for(int i = bmpInfoHeader.biBitCount; i >= 0; i-=bmpInfoHeader.biBitCount)
+		{
 		int num = inimg[x]; 
-        int res = num >> i & 1;
+        int res = num >> i & mask;
 	    outimg[pos++]=palrgb[res].rgbBlue;
         outimg[pos++]=palrgb[res].rgbGreen;
 		outimg[pos++]=palrgb[res].rgbRed;
+		}
     }         
      
     /***** write bmp *****/ 
@@ -91,7 +100,7 @@ int main(int argc, char** argv)
     }
 
     bmpInfoHeader.biBitCount = 24;
-	  bmpInfoHeader.SizeImage = bmpInfoHeader.biWidth*bmpInfoHeader.biHeight*3;
+	bmpInfoHeader.SizeImage = bmpInfoHeader.biWidth*bmpInfoHeader.biHeight*3;
     bmpInfoHeader.biClrUsed = 0;
     bmpHeader.bfSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + bmpInfoHeader.SizeImage;
     bmpHeader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);

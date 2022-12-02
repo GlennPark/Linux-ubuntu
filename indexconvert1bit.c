@@ -1,12 +1,12 @@
 #include <stdio.h> 
 #include <stdlib.h> 
 #include <string.h>
-#include <limits.h>                     /* USHRT_MAX ÏÉÅÏàòÎ•º ÏúÑÌï¥ÏÑú ÏÇ¨Ïö©ÌïúÎã§. */
+#include <limits.h>                     /* USHRT_MAX ªÛºˆ∏¶ ¿ß«ÿº≠ ªÁøÎ«—¥Ÿ. */
 #include "bmpHeader.h"
 
 #define widthBytes(bits) (((bits)+31)/32*4)
 
-/* Ïù¥ÎØ∏ÏßÄ Îç∞Ïù¥ÌÑ∞Ïùò Í≤ΩÍ≥Ñ Í≤ÄÏÇ¨Î•º ÏúÑÌïú Îß§ÌÅ¨Î°ú */
+/* ¿ÃπÃ¡ˆ µ•¿Ã≈Õ¿« ∞Ê∞Ë ∞ÀªÁ∏¶ ¿ß«— ∏≈≈©∑Œ */
 #define LIMIT_UBYTE(n) ((n)>UCHAR_MAX)?UCHAR_MAX:((n)<0)?0:(n)
 
 typedef unsigned char ubyte;
@@ -27,17 +27,17 @@ int main(int argc, char** argv)
     
     /***** read bmp *****/ 
     if((fp=fopen(argv[1], "rb")) == NULL) { 
-        fprintf(stderr, "Error : Failed to open file...‚Ç©n"); 
+        fprintf(stderr, "Error : Failed to open file...£‹n"); 
         return -1;
     }
 
-    /* BITMAPFILEHEADER Íµ¨Ï°∞Ï≤¥Ïùò Îç∞Ïù¥ÌÑ∞ */
+    /* BITMAPFILEHEADER ±∏¡∂√º¿« µ•¿Ã≈Õ */
     fread(&bmpHeader, sizeof(BITMAPFILEHEADER), 1, fp);
 
-    /* BITMAPINFOHEADER Íµ¨Ï°∞Ï≤¥Ïùò Îç∞Ïù¥ÌÑ∞ */
+    /* BITMAPINFOHEADER ±∏¡∂√º¿« µ•¿Ã≈Õ */
     fread(&bmpInfoHeader, sizeof(BITMAPINFOHEADER), 1, fp);
 #if 0
-    /* Ìä∏Î£® Ïª¨Îü¨Î•º ÏßÄÏõêÌïòÏßÄ ÏïäÏúºÎ©¥ ÌëúÏãúÌï† Ïàò ÏóÜÎã§. */
+    /* ∆Æ∑Á ƒ√∑Ø∏¶ ¡ˆø¯«œ¡ˆ æ ¿∏∏È «•Ω√«“ ºˆ æ¯¥Ÿ. */
     if(bmpInfoHeader.biBitCount != 24) {
         perror("This image file doesn't supports 24bit color\n");
         fclose(fp);
@@ -45,19 +45,14 @@ int main(int argc, char** argv)
     }
 #endif 
     if(bmpInfoHeader.SizeImage != 0)
-        bmpInfoHeader.SizeImage  = widthBytes(bmpInfoHeader.biBitCount * bmpInfoHeader.biWidth) *  bmpInfoHeader.biHeight; 
+         bmpInfoHeader.SizeImage= widthBytes(bmpInfoHeader.biBitCount * bmpInfoHeader.biWidth) * 
+                           bmpInfoHeader.biHeight; 
 
-    /* Ïù¥ÎØ∏ÏßÄÏùò Ìï¥ÏÉÅÎèÑ(ÎÑìÏù¥ √ó ÍπäÏù¥) */
+    /* ¿ÃπÃ¡ˆ¿« «ÿªÛµµ(≥–¿Ã °ø ±Ì¿Ã) */
     printf("Resolution : %d x %d\n", bmpInfoHeader.biWidth, bmpInfoHeader.biHeight);
-    printf("Bit Count : %d\n", bmpInfoHeader.biBitCount);     /* ÌîΩÏÖÄÎãπ ÎπÑÌä∏ Ïàò(ÏÉâÏÉÅ) */
-    printf("Size Image : %d\n", bmpInfoHeader.SizeImage );
+    printf("Bit Count : %d\n", bmpInfoHeader.biBitCount);     /* «»ºø¥Á ∫Ò∆Æ ºˆ(ªˆªÛ) */
+    printf("Image Size : %d\n", bmpInfoHeader.SizeImage);
     printf("Color : %d\n", bmpInfoHeader.biClrUsed);
-	
-	if(bmpInfoHeader.biBitCount == 8 && bmpInfoHeader.biClrUsed == 0)
-	{
-		bmpInfoHeader.biClrUsed == 256;
-	}
-
 
     palrgb = (RGBQUAD*)malloc(sizeof(RGBQUAD)*bmpInfoHeader.biClrUsed);
     fread(palrgb, sizeof(RGBQUAD), bmpInfoHeader.biClrUsed, fp); 
@@ -76,17 +71,19 @@ int main(int argc, char** argv)
     elemSize = 3; //bmpInfoHeader.biBitCount / 8;
     int pos = 0; 
 
-    for(x = 0; x < bmpInfoHeader.biWidth*bmpInfoHeader.biHeight/8; x++) {      
-		int num = inimg[x]; 
-        int res = num >> i & 1;
-	    outimg[pos++]=palrgb[res].rgbBlue;
-        outimg[pos++]=palrgb[res].rgbGreen;
-		outimg[pos++]=palrgb[res].rgbRed;
+    for(x = 0; x < bmpInfoHeader.biWidth*bmpInfoHeader.biHeight/8; x++) { 
+        for(int i = 7; i >= 0; --i) { //8¿⁄∏Æ º˝¿⁄±Ó¡ˆ ≥™≈∏≥ø
+             int num = inimg[x]; 
+             int res = num >> i & 1;
+             outimg[pos++]=palrgb[res].rgbBlue;
+             outimg[pos++]=palrgb[res].rgbGreen;
+             outimg[pos++]=palrgb[res].rgbRed;
+        }
     }         
      
     /***** write bmp *****/ 
     if((fp=fopen(argv[2], "wb"))==NULL) { 
-        fprintf(stderr, "Error : Failed to open file...‚Ç©n"); 
+        fprintf(stderr, "Error : Failed to open file...£‹n"); 
         return -1;
     }
 
@@ -96,10 +93,10 @@ int main(int argc, char** argv)
     bmpHeader.bfSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + bmpInfoHeader.SizeImage;
     bmpHeader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
     
-    /* BITMAPFILEHEADER Íµ¨Ï°∞Ï≤¥Ïùò Îç∞Ïù¥ÌÑ∞ */
+    /* BITMAPFILEHEADER ±∏¡∂√º¿« µ•¿Ã≈Õ */
     fwrite(&bmpHeader, sizeof(BITMAPFILEHEADER), 1, fp);
 
-    /* BITMAPINFOHEADER Íµ¨Ï°∞Ï≤¥Ïùò Îç∞Ïù¥ÌÑ∞ */
+    /* BITMAPINFOHEADER ±∏¡∂√º¿« µ•¿Ã≈Õ */
     fwrite(&bmpInfoHeader, sizeof(BITMAPINFOHEADER), 1, fp);
 
     fwrite(outimg, sizeof(unsigned char), bmpInfoHeader.SizeImage, fp);
