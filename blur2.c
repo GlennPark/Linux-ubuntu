@@ -2,9 +2,9 @@
 #include <stdlib.h> 
 #include <string.h>
 #include <limits.h>                     /* USHRT_MAX 상수를 위해서 사용한다. */
-#include "bmpHeader.h"
+#include <unistd.h>
 
-#define widthBytes(bits) (((bits)+31)/32*4)
+#include "bmpHeader.h"
 
 /* 이미지 데이터의 경계 검사를 위한 매크로 */
 #define LIMIT_UBYTE(n) ((n)>UCHAR_MAX)?UCHAR_MAX:((n)<0)?0:(n)
@@ -16,10 +16,9 @@ int main(int argc, char** argv)
     FILE* fp; 
     BITMAPFILEHEADER bmpHeader;             /* BMP FILE INFO */
     BITMAPINFOHEADER bmpInfoHeader;     /* BMP IMAGE INFO */
-    RGBQUAD palrgb[256];
+    RGBQUAD *palrgb;
     ubyte *inimg, *outimg;
-    int x, y, z, elemSize, imageSize;
-    int xFactor = 2, yFactor = 2;
+    int x, y, z, imageSize;
 
     if(argc != 3) {
         fprintf(stderr, "usage : %s input.bmp output.bmp\n", argv[0]);
@@ -38,43 +37,58 @@ int main(int argc, char** argv)
     /* BITMAPINFOHEADER 구조체의 데이터 */
     fread(&bmpInfoHeader, sizeof(BITMAPINFOHEADER), 1, fp);
 
-    /* 트루 컬러를 지원하지 않으면 표시할 수 없다. */
+    /* 트루 컬러를 지원하면 변환할 수 없다. */
     if(bmpInfoHeader.biBitCount != 24) {
         perror("This image file doesn't supports 24bit color\n");
         fclose(fp);
         return -1;
     }
     
-    imageSize = widthBytes(bmpInfoHeader.biBitCount * bmpInfoHeader.biWidth) * 
-                           bmpInfoHeader.biHeight; 
+    int elemSize = bmpInfoHeader.biBitCount/8;
+    int size = bmpInfoHeader.biWidth*elemSize;
+    imageSize = size * bmpInfoHeader.biHeight; 
 
     /* 이미지의 해상도(넓이 × 깊이) */
     printf("Resolution : %d x %d\n", bmpInfoHeader.biWidth, bmpInfoHeader.biHeight);
     printf("Bit Count : %d\n", bmpInfoHeader.biBitCount);     /* 픽셀당 비트 수(색상) */
     printf("Image Size : %d\n", imageSize);
-    
+
     inimg = (ubyte*)malloc(sizeof(ubyte)*imageSize); 
-    outimg = (ubyte*)malloc(sizeof(ubyte)*imageSize*xFactor*yFactor);
-    fread(inimg, sizeof(ubyte), imageSize, fp); 
+    outimg = (ubyte*)malloc(sizeof(ubyte)*imageSize);
+	
+
+	fread(inimg, sizeof(ubyte), imageSize, fp); 
     
     fclose(fp);
-    
-     elemSize = bmpInfoHeader.biBitCount / 8;
-    for(y = 0; y < bmpInfoHeader.biHeight*elemSize; y+=elemSize) { 
-        for(x = 0; x < bmpInfoHeader.biWidth*elemSize; x+=elemSize) {
+
+	//PADDING
+
+
+
+
+    // define the kernel
+		
+//    float kernel[3][3] = { {1/9.0, 1/9.0, 1/9.0},
+//                           {1/9.0, 1/9.0, 1/9.0},
+//                           {1/9.0, 1/9.0, 1/9.0} };
+	float kernel[3][3] =   {{-1, -1, -1},
+							{-1,  9, -1},
+							{-1, -1, -1}}
+
+	memset(outimg, 0, sizeof(ubyte)*imageSize);
+    for(y = 1; y < bmpInfoHeader.biHeight - 1; y++) { 
+        for(x = 1; x < (bmpInfoHeader.biWidth - 1) * elemSize; x+=elemSize) {
             for(z = 0; z < elemSize; z++) {
-                int e1 = inimg[x+(y*bmpInfoHeader.biWidth)+z]; 
-                int e2 = inimg[x+(y*bmpInfoHeader.biWidth)+z+elemSize]; 
-                int e3 = inimg[x+((y+elemSize)*bmpInfoHeader.biWidth)+z]; 
-                int e4 = inimg[x+((y+elemSize)*bmpInfoHeader.biWidth)+z+elemSize]; 
-                //outimg[(x)+(bmpInfoHeader.biWidth*y)+z]=e;
-                outimg[(x+(bmpInfoHeader.biWidth*y*yFactor))*xFactor+z]=e1;
-                outimg[(x+(bmpInfoHeader.biWidth*y*yFactor))*xFactor+z+elemSize]=(e1+e2)>>1;
-                outimg[(x+(bmpInfoHeader.biWidth*(y*yFactor+elemSize)))*xFactor+z]=(e1+e3)>>1;
-                outimg[(x+(bmpInfoHeader.biWidth*(y*yFactor+elemSize)))*xFactor+z+elemSize]=(e1+e2+e3+e4)>>2;
-            }   
-        }   
-     }   
+                float sum = 0.0;
+                for(int i = -1; i < 2; i++) {
+                    for(int j = -1; j < 2; j++) {
+                        sum += kernel[i+1][j+1]*inimg[(x-i*elemSize)+(y-j)*size+z];
+                    }
+                }
+                outimg[x+y*size+z] = sum;
+            }
+        }
+    }         
      
     /***** write bmp *****/ 
     if((fp=fopen(argv[2], "wb"))==NULL) { 
@@ -82,22 +96,19 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    bmpInfoHeader.biWidth*=xFactor; 
-    bmpInfoHeader.biHeight*=yFactor;
-	  bmpInfoHeader.SizeImage = imageSize * xFactor * yFactor;
-    
     /* BITMAPFILEHEADER 구조체의 데이터 */
     fwrite(&bmpHeader, sizeof(BITMAPFILEHEADER), 1, fp);
 
     /* BITMAPINFOHEADER 구조체의 데이터 */
     fwrite(&bmpInfoHeader, sizeof(BITMAPINFOHEADER), 1, fp);
 
-    fwrite(outimg, sizeof(unsigned char), bmpInfoHeader.SizeImage, fp);
+    //fwrite(inimg, sizeof(ubyte), imageSize, fp); 
+    fwrite(outimg, sizeof(ubyte), imageSize, fp);
+
+    fclose(fp); 
     
     free(inimg); 
     free(outimg);
-    
-    fclose(fp); 
     
     return 0;
 }
