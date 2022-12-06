@@ -65,19 +65,6 @@ int main(int argc, char** argv)
     
     fclose(fp);
 
-	
- srand((unsigned int)time(NULL));
-     cnt = atoi(argv[1]);
-     for(i = 0; i < cnt; i++){
-         int pos  = rand()%(bmpInfoHeader.biHeight * bmpInfoHeader.biWidth);
-         int val = rand()&ob11111111;
-         for(z=0; z < elemSize; z++){
-             int tmp = inimg[pos*elemSize+z] + value;
-             inimg[pos*elemSize+z] = LIMIT_UBYTE(tmp);
- 
-         }
-     }
-
 	//PADDING
 //   for(y = 0; y < bmpInfoHeader.biHeight +1; y++){
 //		for(x = 0; x < bmpInfoHeader.biWidth +1; x++){

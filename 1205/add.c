@@ -1,7 +1,6 @@
 #include <stdio.h> 
 #include <stdlib.h> 
 #include <string.h>
-#include <time.h>
 
 #define BYTE unsigned char
 
@@ -55,7 +54,7 @@ int main(int argc, char** argv) {
 	/* usage a.out in.bmp out.bmp */
 	strcpy(input, argv[1]); 
 	strcpy(output, argv[2]);
-	strcpy(cnt, argv[3]);	
+	
 	
 	if((fp=fopen(input, "rb")) == NULL) { 
 		fprintf(stderr, "Error : Failed to open file...₩n"); 
@@ -91,21 +90,7 @@ int main(int argc, char** argv) {
 	fread(inimg, sizeof(BYTE), imagesize, fp); 
 	
 	fclose(fp);
-
- srand((unsigned int)time(NULL));
-     cnt = atoi(argv[1]);
-     for(i = 0; i < cnt; i++){
-         int pos  = rand()%(bmpInfoHeader.biHeight * bmpInfoHeader.biWidth);
-         int val = rand()&ob11111111;
-         for(z=0; z < elemSize; z++){
-             int tmp = inimg[pos*elemSize+z] + value;
-             inimg[pos*elemSize+z] = LIMIT_UBYTE(tmp);
- 
-         }
-     }
-
-
-
+	
 	for(i=0; i<height*3; i+=3) { 
 		for(j=0; j<width*3; j+=3) {
 			int b = inimg[j+(i*width+0)]; 

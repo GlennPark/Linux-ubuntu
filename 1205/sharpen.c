@@ -27,7 +27,7 @@ int main(int argc, char** argv)
     
     /***** read bmp *****/ 
     if((fp=fopen(argv[1], "rb")) == NULL) { 
-        fprintf(stderr, "Error : Failed to open file...\n"); 
+        fprintf(stderr, "Error : Failed to open file...₩n"); 
         return -1;
     }
 
@@ -58,23 +58,7 @@ int main(int argc, char** argv)
     fread(inimg, sizeof(ubyte), imageSize, fp); 
     fclose(fp);
 
-//white noise add
-/*    srand((unsigned int)time(NULL));
-    cnt = atoi(argv[1]);
-    for(i = 0; i < cnt; i++){
-        int pos  = rand()%(bmpInfoHeader.biHeight * bmpInfoHeader.biWidth);
-        int val = rand()&ob11111111;
-        for(z=0; z < elemSize; z++){
-            int tmp = inimg[pos*elemSize+z] + value;
-            inimg[pos*elemSize+z] = LIMIT_UBYTE(tmp);
- 
-        }
-    }
-*/
-//  qsort(,(sizeof(ubyte)*imageSize));
-
-
-	int padSize = (bmpInfoHeader.biWidth + 2) * elemSize;
+    int padSize = (bmpInfoHeader.biWidth + 2) * elemSize;
     int addSize = (padSize + bmpInfoHeader.biHeight)*2;
     padimg = (ubyte*)malloc(sizeof(ubyte)*(imageSize + addSize));
 
@@ -84,6 +68,7 @@ int main(int argc, char** argv)
     for(y = 0; y < bmpInfoHeader.biHeight; y++) {
         for(x = 0; x < bmpInfoHeader.biWidth * elemSize; x+=elemSize) {
             for(z = 0; z < elemSize; z++) {
+                //outimg[(x+elemSize)+(y+1)*size+z]=inimg[x+y*size+z];
                 padimg[(x+elemSize)+(y+1)*padSize+z]=inimg[x+y*size+z];
             }
         }
@@ -97,15 +82,15 @@ int main(int argc, char** argv)
     }
 
     for(x = 0; x < bmpInfoHeader.biWidth*elemSize; x++) { 
-        padimg[elemSize+x]=inimg[x];
-        padimg[elemSize+x+(bmpInfoHeader.biHeight+1)*padSize]=inimg[x+(bmpInfoHeader.biHeight-1)*size];
+ //       padimg[elemSize+x]=inimg[x];
+        padimg[elemSize+x+(bmpInfoHeader.biHeight)*padSize]=inimg[x+(bmpInfoHeader.biHeight-1)*size];
     }
 
     for(z = 0; z < elemSize; z++) {
        padimg[z]=inimg[z];
        padimg[padSize-elemSize+z]=inimg[size-elemSize+z];
-       padimg[(bmpInfoHeader.biHeight+1)*padSize+z]=inimg[(bmpInfoHeader.biHeight-1)*size+z];
-       padimg[(bmpInfoHeader.biHeight+1)*padSize+padSize-elemSize+z]=inimg[(bmpInfoHeader.biHeight-1)*size+size-elemSize+z];
+       padimg[(bmpInfoHeader.biHeight+2)*padSize+z]=inimg[(bmpInfoHeader.biHeight-1)*size+z];
+       padimg[(bmpInfoHeader.biHeight+2)*padSize+padSize-elemSize+z]=inimg[(bmpInfoHeader.biHeight-1)*size+size-elemSize+z];
     }
 
     // define the kernel

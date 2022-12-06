@@ -2,6 +2,8 @@
 #include <stdlib.h> 
 #include <string.h>
 #include <limits.h>                     /* USHRT_MAX 상수를 위해서 사용한다. */
+#include <math.h>
+
 #include <unistd.h>
 
 #include "bmpHeader.h"
@@ -10,6 +12,20 @@
 #define LIMIT_UBYTE(n) ((n)>UCHAR_MAX)?UCHAR_MAX:((n)<0)?0:(n)
 
 typedef unsigned char ubyte;
+
+void userqsort(int a[], int n)
+{
+	int i, j;
+	for(i = 1; i < n; i++){
+		int tmp = a[i];
+		for(j = i; j > 0 && a[j - 1] > tmp; j --)
+			a[j] = a[j - 1];
+		a[j] = tmp;
+	}
+	
+}
+
+
 
 int main(int argc, char** argv) 
 {
@@ -71,7 +87,7 @@ int main(int argc, char** argv)
         }
     }
 */
-//  qsort(,(sizeof(ubyte)*imageSize));
+
 
 
 	int padSize = (bmpInfoHeader.biWidth + 2) * elemSize;
@@ -109,26 +125,36 @@ int main(int argc, char** argv)
     }
 
     // define the kernel
-    float kernel[3][3] = { {-1, -1, -1},
-                           {-1,  9, -1},
-                           {-1, -1, -1} };
+//    float kernel[3][3] = { {-1, -1, -1},
+//                           {-1,  9, -1},
+//                           {-1, -1, -1} };
+		
+int arr[9];
+int tmp;
+int count;
 
     memset(outimg, 0, sizeof(ubyte)*imageSize);
     for(y = 1; y < bmpInfoHeader.biHeight + 1; y++) { 
         for(x = elemSize; x < padSize; x+=elemSize) {
             for(z = 0; z < elemSize; z++) {
                 float sum = 0.0;
-                for(int i = -1; i < 2; i++) {
-                    for(int j = -1; j < 2; j++) {
-                        sum += kernel[i+1][j+1]*padimg[(x+i*elemSize)+(y+j)*padSize+z];
-                    }
+				count = 0;
+				for(int i = 0; i < 3; i++) {
+                    for(int j = 0; j < 3; j++) {
+					
+                  arr[count++] = padimg[(x+i*elemSize)+(y+j)*padSize+z];
+                 
+
+					}
                 }
-                outimg[(x-elemSize)+(y-1)*size+z] = LIMIT_UBYTE(sum);
+				userqsort(arr, 9);
+                outimg[(x-elemSize)+(y-1)*size+z] = LIMIT_UBYTE(arr[4]); 
             }
         }
     }         
-     
-    /***** write bmp *****/ 
+	
+	
+	/***** write bmp *****/ 
     if((fp=fopen(argv[2], "wb"))==NULL) { 
         fprintf(stderr, "Error : Failed to open file...₩n"); 
         return -1;
