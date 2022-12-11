@@ -47,7 +47,7 @@ int main(int argc, char** argv)
     }
 #endif 
     if(bmpInfoHeader.SizeImage != 0)
-        bmpInfoHeader.SizeImage  = widthBytes(bmpInfoHeader.biBitCount * bmpInfoHeader.biWidth) *  bmpInfoHeader.biHeight; 
+        bmpInfoHeader.SizeImage = widthBytes(bmpInfoHeader.biBitCount * bmpInfoHeader.biWidth)*bmpInfoHeader.biHeight; 
 
     /* 이미지의 해상도(넓이 × 깊이) */
     printf("Resolution : %d x %d\n", bmpInfoHeader.biWidth, bmpInfoHeader.biHeight);
