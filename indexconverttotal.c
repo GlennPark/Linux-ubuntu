@@ -19,8 +19,9 @@ int main(int argc, char** argv)
     RGBQUAD *palrgb;
     ubyte *inimg, *outimg;
     int x, y, z;
-	float elemSize;
-	int mask = 0;
+    float elemSize;	
+    
+    int mask = 0b0;
 
     if(argc != 3) {
         fprintf(stderr, "usage : %s input.bmp output.bmp\n", argv[0]);
@@ -47,8 +48,9 @@ int main(int argc, char** argv)
     }
 #endif 
     if(bmpInfoHeader.SizeImage != 0)
-        bmpInfoHeader.SizeImage = widthBytes(bmpInfoHeader.biBitCount * bmpInfoHeader.biWidth)*bmpInfoHeader.biHeight; 
-
+    {
+	    bmpInfoHeader.SizeImage = widthBytes(bmpInfoHeader.biBitCount * bmpInfoHeader.biWidth)*bmpInfoHeader.biHeight;
+    }
     /* 이미지의 해상도(넓이 × 깊이) */
     printf("Resolution : %d x %d\n", bmpInfoHeader.biWidth, bmpInfoHeader.biHeight);
     printf("Bit Count : %d\n", bmpInfoHeader.biBitCount);     /* 픽셀당 비트 수(색상) */
@@ -57,15 +59,16 @@ int main(int argc, char** argv)
 	
 	if(bmpInfoHeader.biBitCount == 8 && bmpInfoHeader.biClrUsed == 0)
 	{
-		bmpInfoHeader.biClrUsed == 256;
+		bmpInfoHeader.biClrUsed = 256;
 	}
 
     palrgb = (RGBQUAD*)malloc(sizeof(RGBQUAD)*bmpInfoHeader.biClrUsed);
     fread(palrgb, sizeof(RGBQUAD), bmpInfoHeader.biClrUsed, fp); 
 
     for(int i = 0; i < bmpInfoHeader.biClrUsed; i++) 
-		printf("%d : %x %x %x %x\n", i, palrgb[i].rgbRed, palrgb[i].rgbGreen, 
-                              palrgb[i].rgbRed, palrgb[i].rgbReserved);
+    {	
+	    printf("%d : %x %x %x %x\n", i, palrgb[i].rgbBlue, palrgb[i].rgbGreen, palrgb[i].rgbRed, palrgb[i].rgbReserved);
+    }
     //printf("%d %d\n", sizeof(BITMAPFILEHEADER), sizeof(BITMAPINFOHEADER));
 
     inimg = (ubyte*)malloc(sizeof(ubyte)*bmpInfoHeader.SizeImage); 
@@ -75,7 +78,8 @@ int main(int argc, char** argv)
     fclose(fp);
 
     for(x = 0; x < bmpInfoHeader.biBitCount; x++)
-	mask |= 1 << x;
+	mask |= 0b1 << x;
+    
 
 printf:("%d", mask);
     elemSize = bmpInfoHeader.biBitCount / 8.;
@@ -83,12 +87,12 @@ printf:("%d", mask);
 
     for(x = 0; x < bmpInfoHeader.biWidth*bmpInfoHeader.biHeight*elemSize; x++) {      
 		
-		for(int i = bmpInfoHeader.biBitCount; i >= 0; i-=bmpInfoHeader.biBitCount)
+		for(int i = 8- bmpInfoHeader.biBitCount; i >= 0; i-=bmpInfoHeader.biBitCount)
 		{
-		int num = inimg[x]; 
-        int res = num >> i & mask;
-	    outimg[pos++]=palrgb[res].rgbBlue;
-        outimg[pos++]=palrgb[res].rgbGreen;
+		int num = inimg[x];   
+       		int res = num >> i & mask;
+	        outimg[pos++]=palrgb[res].rgbBlue;
+        	outimg[pos++]=palrgb[res].rgbGreen;
 		outimg[pos++]=palrgb[res].rgbRed;
 		}
     }         
@@ -100,7 +104,7 @@ printf:("%d", mask);
     }
 
     bmpInfoHeader.biBitCount = 24;
-	bmpInfoHeader.SizeImage = bmpInfoHeader.biWidth*bmpInfoHeader.biHeight*3;
+    bmpInfoHeader.SizeImage = bmpInfoHeader.biWidth*bmpInfoHeader.biHeight*3;
     bmpInfoHeader.biClrUsed = 0;
     bmpHeader.bfSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + bmpInfoHeader.SizeImage;
     bmpHeader.bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
